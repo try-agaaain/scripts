@@ -13,19 +13,6 @@ CONFIG_FILE="host-only/.config"
 # 安装必要的工具，用于在脚本中触发DHCP
 sudo apt install isc-dhcp-client isc-dhcp-client-ddns
 
-########## 请正确配置好对应.config文件后再执行 ##########
-echo -e "\033[1;33m**Note: Please ensure that the configuration file '$CONFIG_FILE' is correctly set.\033[0m"
-echo "Do you want to continue? (yes/no)"
-
-read -r USER_INPUT
-
-# 根据输入判断是否继续
-if [[ "$USER_INPUT" != "yes" ]]; then
-    echo "Proceeding with the program..."
-    exit 1 
-fi
-#######################################################
-
 # 定义服务文件的路径
 service_file="/etc/systemd/system/$service_name"
 

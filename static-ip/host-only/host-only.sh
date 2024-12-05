@@ -4,14 +4,15 @@
 sudo dhclient -r  # 删除原有IP地址
 sudo dhclient     # 通过DHCP重新分配
 
-dir=$(dirname "$(realpath "$0")")
-
+dir=$(dirname "$(realpath "$0")") # static-ip/host-only
+p_dir=$(dirname "$dir")      # static-ip/
+pp_dir=$(dirname "$p_dir")
 # 配置文件路径
-CONFIG_FILE_PATH="$dir/.config"
+CONFIG_FILE_PATH="$pp_dir/.config"
 
 # 检查配置文件是否存在
 if [ ! -f "$CONFIG_FILE_PATH" ]; then
-    echo "配置文件不存在，请确保 .config 文件在当前目录"
+    echo "配置文件不存在，请确保 $CONFIG_FILE_PATH 文件无误"
     exit 1
 fi
 

@@ -1,61 +1,68 @@
 #!/bin/bash
 
-# 检查是否传递了参数
-if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 <username>"
-    exit 1
-fi
+dir=$(dirname "$(realpath "$0")") # ssh/
+p_dir=$(dirname "$dir")
 
-# 获取传递的用户名
-USERNAME=$1
-
-dir=$(dirname "$(realpath "$0")")
-
-HOME_DIR=$(eval echo "~$USERNAME")
-# 修改 SSH 配置文件
-SSH_CONFIG="/etc/ssh/sshd_config"
-SSH_KEY_FILE="$dir/ssh_key.pub"
-USER_AUTH_KEYS="$HOME_DIR/.ssh/authorized_keys"
+# 配置文件路径
+CONFIG_FILE_PATH="$p_dir/.config"
 
 # 检查配置文件是否存在
-if [[ ! -f "$SSH_CONFIG" ]]; then
-    echo "Error: SSH configuration file not found at $SSH_CONFIG"
+if [ ! -f "$CONFIG_FILE_PATH" ]; then
+    echo "配置文件不存在，请确保 $CONFIG_FILE_PATH 文件无误"
     exit 1
 fi
 
-############################ 允许root用户通过ssh登录 ############################
-echo "Modifying SSH configuration to allow root login..."
-sed -i 's/^#PermitRootLogin .*/PermitRootLogin yes/' "$SSH_CONFIG"
-if ! grep -q "^PermitRootLogin yes" "$SSH_CONFIG"; then
-    echo "PermitRootLogin yes" >> "$SSH_CONFIG"
+# 读取配置文件
+source "$CONFIG_FILE_PATH"
+
+# 检查必要的配置项是否存在
+if [[ -z "$USERNAME" || -z "$SSH_CONFIG" || -z "$USER_PUBLIC_KEY" ]]; then
+    echo "Error: Missing required configuration in $CONFIG_FILE."
+    exit 1
 fi
+
+# 获取用户的 home 目录
+HOME_DIR=$(eval echo "~$USERNAME")
+USER_AUTH_KEYS="$HOME_DIR/.ssh/authorized_keys"
 
 # 设置 root 用户密码
-echo "Setting password for root user..."
-passwd root
+if [[ -n "$ROOT_PASSWORD" ]]; then
+    echo "Setting root password..."
+    echo "root:$ROOT_PASSWORD" | chpasswd
+    # 修改 SSH 配置文件允许 root 登录
+    echo "Modifying SSH configuration to allow root login..."
+    if [[ -f "$SSH_CONFIG" ]]; then
+        sed -i 's/^#PermitRootLogin .*/PermitRootLogin yes/' "$SSH_CONFIG"
+        if ! grep -q "^PermitRootLogin yes" "$SSH_CONFIG"; then
+            echo "PermitRootLogin yes" >> "$SSH_CONFIG"
+        fi
+    else
+        echo "Error: SSH configuration file not found at $SSH_CONFIG"
+        exit 1
+    fi
+else
+    echo "Warning: ROOT_PASSWORD not set. Skipping root password configuration."
+fi
 
-echo "Setup completed. Root user can now log in via SSH."
-################################################################################
-
-############################## 为指定用户添加公钥 ###############################
-if [[ -f "$SSH_KEY_FILE" ]]; then
-    echo "Adding public key from $SSH_KEY_FILE to $USER_AUTH_KEYS..."
-
-    # 确保 $HOME/.ssh 目录存在
-    mkdir -p $HOME/.ssh
-    chmod 700 $HOME/.ssh
+# 为指定用户添加公钥
+echo "Adding public key for user $USERNAME..."
+if [[ -n "$USER_PUBLIC_KEY" ]]; then
+    mkdir -p "$HOME_DIR/.ssh"
+    chmod 700 "$HOME_DIR/.ssh"
 
     # 添加公钥到 authorized_keys
-    cat "$SSH_KEY_FILE" >> "$USER_AUTH_KEYS"
+    echo "$USER_PUBLIC_KEY" > "$USER_AUTH_KEYS"
     chmod 600 "$USER_AUTH_KEYS"
+    chown -R "$USERNAME:$USERNAME" "$HOME_DIR/.ssh"
 
-    echo "Public key added successfully."
+    echo "Public key added successfully for user $USERNAME."
 else
-    echo "Error: Public key file $SSH_KEY_FILE not found in the current directory."
+    echo "Error: USER_PUBLIC_KEY is empty. Cannot add public key."
+    exit 1
 fi
-################################################################################
 
-echo "SSH configuration updated. Restarting SSH service..."
+# 重启 SSH 服务
+echo "Restarting SSH service..."
 systemctl restart ssh
 if [[ $? -ne 0 ]]; then
     echo "Failed to restart SSH service."
@@ -63,4 +70,4 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "SSH service restarted successfully!"
-
+echo "Setup completed."

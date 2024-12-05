@@ -1,5 +1,20 @@
 #!/bin/bash
 
+
+########## 请正确配置好对应.config文件后再执行 ##########
+echo -e "\033[1;33m**Note: Please ensure that the configuration file '.config' is correctly set.\033[0m"
+echo -e "\033[1;33mDo you want to continue? (yes/no)\033[0m"
+
+read -r USER_INPUT
+
+# 根据输入判断是否继续
+if [[ "$USER_INPUT" != "yes" ]]; then
+    echo "Proceeding with the program..."
+    exit 1 
+fi
+#######################################################
+
+
 # 获取当前脚本所在目录
 dir=$(dirname "$(realpath "$0")")
 
@@ -8,7 +23,7 @@ target_dir="/usr/local/scripts-for-virtualbox"
 
 # 检查目标目录是否已存在
 if [ ! -d "$target_dir" ]; then
-    echo "Moving $dir to $target_dir..."
+    echo "Copying $dir to $target_dir..."
     sudo mkdir -p "$target_dir"
     sudo cp -r "$dir/"* "$target_dir/"
 else
