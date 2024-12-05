@@ -1,13 +1,22 @@
-这个项目编写了几个方便易用的脚本，以便更快的在虚拟机上完成一些设置，主要有：
+这个项目为在VirtualBox上部署Ubuntu虚拟机编写了几个方便易用的脚本，以便更快的在虚拟机上完成一些设置，主要有：
 
-1、安装常用的工具，比如virtualbox-guest-utils；
+1、安装常用的工具，比如virtualbox-guest-utils，这是VirtualBox提供文件共享功能所需要的库；
 
-2、为Host-Only设置静态IP地址；
+2、为Host-Only网络接口设置静态IP地址；
 
 3、将主机公钥添加到虚拟机ssh配置中。
 
+脚本经过多次测试，能顺利完成部署任务。
 
-## 各脚本的信息
+### 如何使用
+
+虚拟机安装后，将该脚本通过文件共享方式或在VScode上通过拖拽的方式加入到虚拟机中，随后在 ·config 文件中配置好你需要的信息，执行：
+
+```bash
+sudo bash build.sh
+```
+
+## 更具体的功能
 
 ### [build.sh](./build.sh)
 将所有文件复制一份到 `/usr/local/scripts-for-virtualbox`，随后依次执行各个子脚本。
@@ -27,15 +36,14 @@
 
 
 ### [ssh/ssh.sh](./ssh/ssh.sh)
-需手动配置 [ssh/.config](ssh/.config)，提供用户名和主机公钥。
 
-该脚本为指定用户配置主机公钥，以便该用户能在主机侧免密登录到虚拟机。
+需在 `.config` 文件中手动配置用户名和主机公钥。该脚本可以为指定用户配置主机公钥，以便该用户能在主机侧免密登录到虚拟机。
 
+### [static-ip/install.sh](static-ip/install.sh)
 
-### [static-ip](./static-ip/)
+用于注册开机自动执行服务——`host-only.service`，[static-ip/install.sh](static-ip/install.sh) 会自动生成该文件并添加到 `/etc/systemd/system` 中，随后通过 `sudo systemctl enable host-only.service` 使该服务生效，每次开机时便会自动执行该服务。
 
-#### [static-ip/install.sh](static-ip/install.sh)
-用于注册开机自动执行的服务，这个服务用于执行指定的 [static-ip/host-only/host-only.sh](static-ip/host-only/host-only.sh) 脚本，该脚本会根据 [static-ip/host-only/.config](static-ip/host-only/.config) 生成 `/etc/netplan/60-host-only.yaml` 文件用于设置静态IP地址，虚拟机在每次启动时都会加载该文件，使静态IP生效。
+这个服务会执行指定的 [static-ip/host-only/host-only.sh](static-ip/host-only/host-only.sh) 脚本，该脚本会根据 [.config](.config) 的配置信息生成 `/etc/netplan/60-host-only.yaml` 文件用于设置静态IP地址，虚拟机在每次启动时都会加载该文件，使静态IP生效。
 
 > 这个过程实际上只需要生成一次 `/etc/netplan/60-host-only.yaml` 文件就够了，其实没有必要写成开机服务的方式。通过 `sudo systemctl disable host-only.service` 停用该服务也没关系。
 
