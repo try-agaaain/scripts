@@ -4,11 +4,8 @@
 dir=$(dirname "$(realpath "$0")")
 
 # 服务和脚本文件名
-# service_name="bridge.service"
-# script_name="bridge/bridge.sh"
 service_name="host-only.service"
 script_name="host-only/host-only.sh"
-CONFIG_FILE="host-only/.config"
 
 # 安装必要的工具，用于在脚本中触发DHCP
 sudo apt install isc-dhcp-client isc-dhcp-client-ddns

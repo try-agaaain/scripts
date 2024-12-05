@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# 让DHCP动态分配地址，原本不必要，但这次部署时有些网卡没有自动部署上IP地址。
-sudo dhclient -r  # 删除原有IP地址
-sudo dhclient     # 通过DHCP重新分配
-
 dir=$(dirname "$(realpath "$0")") # static-ip/host-only
 p_dir=$(dirname "$dir")      # static-ip/
 pp_dir=$(dirname "$p_dir")
@@ -15,6 +11,10 @@ if [ ! -f "$CONFIG_FILE_PATH" ]; then
     echo "配置文件不存在，请确保 $CONFIG_FILE_PATH 文件无误"
     exit 1
 fi
+
+# 让DHCP动态分配地址，原本不必要，但这次部署时有些网卡没有自动部署上IP地址。
+sudo dhclient -r  # 删除原有IP地址
+sudo dhclient     # 通过DHCP重新分配
 
 # 读取配置文件
 source "$CONFIG_FILE_PATH"

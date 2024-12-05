@@ -14,31 +14,28 @@ if [[ "$USER_INPUT" != "yes" ]]; then
 fi
 #######################################################
 
-
 # 获取当前脚本所在目录
 dir=$(dirname "$(realpath "$0")")
+CONFIG_FILE_PATH="$dir/.config"
+source "$CONFIG_FILE_PATH"
 
 # 定义目标位置
 target_dir="/usr/local/scripts-for-virtualbox"
 
+echo "Copying $dir to $target_dir..."
 # 检查目标目录是否已存在
-if [ ! -d "$target_dir" ]; then
-    echo "Copying $dir to $target_dir..."
-    sudo mkdir -p "$target_dir"
-    sudo cp -r "$dir/"* "$target_dir/"
-else
-    echo "$target_dir already exists. Updating scripts..."
-    sudo cp -r "$dir/"* "$target_dir/"
+if [ -d "$target_dir" ]; then
+    sudo rm -r $target_dir
 fi
-
-# 切换到目标目录
-dir="$target_dir"
+# sudo mkdir -p "$target_dir"
+sudo cp -r $dir $target_dir
+sudo chown -R "$USERNAME:$USERNAME" "$target_dir"
 
 # 定义要执行的子脚本路径
 scripts=(
-    "static-ip/install.sh"
     "init/init.sh"
     "ssh/ssh.sh"
+    "static-ip/install.sh"
 )
 
 # 使用 for 循环遍历并执行子脚本
